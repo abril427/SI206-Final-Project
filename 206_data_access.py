@@ -15,11 +15,91 @@
 ######### END INSTRUCTIONS #########
 
 # Put all import statements you need here.
+import unittest
+import tweepy
+import twitter_info # my personal private twitter_info
+import json
+import sqlite3
+
 
 # Begin filling in instructions....
 
 
+##### TWEEPY SETUP CODE:
+# Authentication information should be in a twitter_info file...
+consumer_key = twitter_info.consumer_key
+consumer_secret = twitter_info.consumer_secret
+access_token = twitter_info.access_token
+access_token_secret = twitter_info.access_token_secret
+auth = tweepy.OAuthHandler(consumer_key, consumer_secret)
+auth.set_access_token(access_token, access_token_secret)
 
+# Set up library to grab stuff from twitter with your authentication, and return it in a JSON format 
+api = tweepy.API(auth, parser=tweepy.parsers.JSONParser())
+
+##### END TWEEPY SETUP CODE
+
+
+##### caching setup: 
+
+CACHE_FNAME = "206_final_project_cache.json"
+# Put the rest of your caching setup here:
+try:
+  cache_file = open(CACHE_FNAME,'r')
+  cache_contents = cache_file.read()
+  cache_file.close()
+  CACHE_DICTION = json.loads(cache_contents)
+except:
+  CACHE_DICTION = {}
+
+##### end caching setup
+
+
+def twitterGetUserWithCaching(consumerKey, consumerSecret, accessToken, accessSecret, handle):
+  results_url = api.user_timeline(id=handle)
+
+  if handle in CACHE_DICTION: # if we've already made this request
+    # print('using cache')
+      # use stored response
+    response_text = CACHE_DICTION[handle] # grab the data from the cache
+  else: # otherwise
+    # print('fetching')
+    results = results_url
+    CACHE_DICTION[handle] = results   
+
+    #cache data
+    cache_file = open('206_final_project_cache.json', 'w')
+    cache_file.write(json.dumps(CACHE_DICTION))
+    cache_file.close()
+
+    response_text = CACHE_DICTION[handle] # whichver way we got the data, load it into a python object
+  return response_text # and return it from the function!
+
+
+def twitterGetSearchWithCaching(consumerKey, consumerSecret, accessToken, accessSecret, searchQuery):
+
+  results_url = api.search(q=searchQuery)
+
+  if searchQuery in CACHE_DICTION: # if we've already made this request
+    # print('using cache')
+      # use stored response
+    response_text = CACHE_DICTION["twitter_"+searchQuery] # grab the data from the cache
+  else: # otherwise
+    # print('fetching')
+    results = results_url
+    CACHE_DICTION["twitter_"+searchQuery] = results   
+
+    #cache data
+    jsonFile = open('206_final_project_cache.json', 'w')
+    jsonFile.write(json.dumps(CACHE_DICTION))
+    jsonFile.close()
+
+    response_text = CACHE_DICTION["twitter_"+searchQuery] # whichver way we got the data, load it into a python object
+  return response_text # and return it from the function!
+
+userTweets = twitterGetUserWithCaching(consumer_key, consumer_secret, access_token, access_token_secret, "umich")
+
+searchedTweets = twitterGetSearchWithCaching(consumer_key, consumer_secret, access_token, access_token_secret, "Easter")
 
 
 
