@@ -102,7 +102,35 @@ userTweets = twitterGetUserWithCaching(consumer_key, consumer_secret, access_tok
 searchedTweets = twitterGetSearchWithCaching(consumer_key, consumer_secret, access_token, access_token_secret, "Moonlight")
 
 
+##### START setup of database: 
+conn = sqlite3.connect('finalproject.db')
+cur = conn.cursor()
 
+# table Tweets, with columns:
+# - tweet_id (containing the string id belonging to the Tweet itself, from the data you got from Twitter -- note the id_str attribute) -- this column should be the PRIMARY KEY of this table
+# - text (containing the text of the Tweet)
+# - user_id (an ID string, referencing the Users table, see below)
+# - time_posted (the time at which the tweet was created)
+# - retweets (containing the integer representing the number of times the tweet has been retweeted)
+
+cur.execute('DROP TABLE IF EXISTS Tweets')
+cur.execute('CREATE TABLE Tweets (tweet_id STRING PRIMARY KEY, text TEXT, time_posted TIMESTAMP, retweets INTEGER, user_id STRING)')
+
+# table Users, with columns:
+# - user_id (containing the string id belonging to the user, from twitter data -- note the id_str attribute) -- this column should be the PRIMARY KEY of this table
+# - screen_name (containing the screen name of the user on Twitter)
+# - num_favs (containing the number of tweets that user has favorited)
+# - description (text containing the description of that user on Twitter, e.g. "Lecturer IV at UMSI focusing on programming" or "I tweet about a lot of things" or "Software engineer, librarian, lover of dogs..." -- whatever it is. OK if an empty string)
+
+cur.execute('DROP TABLE IF EXISTS Users')
+cur.execute('CREATE TABLE Users (user_id STRING PRIMARY KEY, screen_name TEXT, num_favs INTEGER, description TEXT)')
+
+# table Movies, with columns:
+
+
+
+### IMPORTANT: MAKE SURE TO CLOSE YOUR DATABASE CONNECTION AT THE END OF THE FILE HERE SO YOU DO NOT LOCK YOUR DATABASE (it's fixable, but it's a pain). ###
+cur.close()
 
 
 # Put your tests here, with any edits you now need from when you turned them in with your project plan.
