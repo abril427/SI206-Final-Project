@@ -99,13 +99,23 @@ def twitterGetSearchWithCaching(consumerKey, consumerSecret, accessToken, access
 
 userTweets = twitterGetUserWithCaching(consumer_key, consumer_secret, access_token, access_token_secret, "umich")
 
-searchedTweets = twitterGetSearchWithCaching(consumer_key, consumer_secret, access_token, access_token_secret, "Easter")
+searchedTweets = twitterGetSearchWithCaching(consumer_key, consumer_secret, access_token, access_token_secret, "Moonlight")
 
 
 
 
 
 # Put your tests here, with any edits you now need from when you turned them in with your project plan.
+class TwitterDataTests(unittest.TestCase):
+  def test_twitter_search_term_caching(self):
+    fstr = open("206_final_project_cache.json","r").read()
+    self.assertTrue("twitter_Moonlight" in fstr) #Moonlight will be one of the search terms
+
+  def test_twitter_user_caching(self):
+    fstr = open("206_final_project_cache.json","r").read()
+    self.assertTrue("umich" in fstr) #Moonlight will be one of the search terms
 
 
 # Remember to invoke your tests so they will run! (Recommend using the verbosity=2 argument.)
+if __name__ == "__main__":
+  unittest.main(verbosity=2)
