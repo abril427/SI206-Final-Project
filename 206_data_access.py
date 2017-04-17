@@ -110,23 +110,34 @@ cur = conn.cursor()
 # - tweet_id (containing the string id belonging to the Tweet itself, from the data you got from Twitter -- note the id_str attribute) -- this column should be the PRIMARY KEY of this table
 # - text (containing the text of the Tweet)
 # - user_id (an ID string, referencing the Users table, see below)
-# - time_posted (the time at which the tweet was created)
+# - movie_title (containing the text of the movie title searched and contained in each tweet)
+# - num_favs (containing the number of favorites that this tweet has received)
 # - retweets (containing the integer representing the number of times the tweet has been retweeted)
 
 cur.execute('DROP TABLE IF EXISTS Tweets')
-cur.execute('CREATE TABLE Tweets (tweet_id STRING PRIMARY KEY, text TEXT, time_posted TIMESTAMP, retweets INTEGER, user_id STRING)')
+cur.execute('CREATE TABLE Tweets (tweet_id STRING PRIMARY KEY, text TEXT, user_id STRING, movie_title TEXT, num_favs INTEGER, retweets INTEGER)')
 
 # table Users, with columns:
 # - user_id (containing the string id belonging to the user, from twitter data -- note the id_str attribute) -- this column should be the PRIMARY KEY of this table
 # - screen_name (containing the screen name of the user on Twitter)
-# - num_favs (containing the number of tweets that user has favorited)
+# - num_likes (containing the number of tweets that user has favorited)
 # - description (text containing the description of that user on Twitter, e.g. "Lecturer IV at UMSI focusing on programming" or "I tweet about a lot of things" or "Software engineer, librarian, lover of dogs..." -- whatever it is. OK if an empty string)
+# - num_tweets (containing the number of tweets a user has made in total)
+# - num_followers (containing the number of followers this user has)
 
 cur.execute('DROP TABLE IF EXISTS Users')
-cur.execute('CREATE TABLE Users (user_id STRING PRIMARY KEY, screen_name TEXT, num_favs INTEGER, description TEXT)')
+cur.execute('CREATE TABLE Users (user_id STRING PRIMARY KEY, screen_name TEXT, num_likes INTEGER, description TEXT, num_tweets INTEGER, num_followers INTEGER)')
 
 # table Movies, with columns:
+# - movie_id (containing the id belonging to the movie itself, from the data you got from OMDB) -- this column should be the PRIMARY KEY of this table
+# - movie_title (containing the text of the movie title of the movie)
+# - director (containig the text of the name of the director of the movie)
+# - num_langs (containing the number of languages the movie was produced/released in)
+# - rating (containing the REAL value of the rating of the movie)
+# - top_actor (containg the text of the name of the top billed actor in the movie)
 
+cur.execute('DROP TABLE IF EXISTS Movies')
+cur.execute('CREATE TABLE Movies (movie_id STRING PRIMARY KEY, movie_title TEXT, director TEXT, num_langs INTEGER, rating REAL, top_actor TEXT)')
 
 
 ### IMPORTANT: MAKE SURE TO CLOSE YOUR DATABASE CONNECTION AT THE END OF THE FILE HERE SO YOU DO NOT LOCK YOUR DATABASE (it's fixable, but it's a pain). ###
