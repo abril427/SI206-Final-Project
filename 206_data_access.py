@@ -20,6 +20,7 @@ import tweepy
 import twitter_info # my personal private twitter_info
 import json
 import sqlite3
+import requests
 
 
 # Begin filling in instructions....
@@ -80,7 +81,7 @@ def twitterGetSearchWithCaching(consumerKey, consumerSecret, accessToken, access
 
   results_url = api.search(q=searchQuery)
 
-  if searchQuery in CACHE_DICTION: # if we've already made this request
+  if ("twitter_"+searchQuery) in CACHE_DICTION: # if we've already made this request
     # print('using cache')
       # use stored response
     response_text = CACHE_DICTION["twitter_"+searchQuery] # grab the data from the cache
@@ -98,11 +99,37 @@ def twitterGetSearchWithCaching(consumerKey, consumerSecret, accessToken, access
   return response_text # and return it from the function!
 
 
+def getMovieDataWithCaching(title):
+  parameters = {'t': title}
+  results_url = 'http://www.omdbapi.com/?'
+  resp = requests.get(url=results_url, params=parameters)
+  response = json.loads(resp.text)
+  if ("imdb_"+title) in CACHE_DICTION: # if we've already made this request
+      # use stored response
+    response_text = CACHE_DICTION["imdb_" + title] # grab the data from the cache
+  else: # otherwise
+    results = response
+    CACHE_DICTION["imdb_" + title] = results   
+
+    #cache data
+    cache_file = open('206_final_project_cache.json', 'w')
+    cache_file.write(json.dumps(CACHE_DICTION))
+    cache_file.close()
+
+    response_text = CACHE_DICTION[title] # whichver way we got the data, load it into a python object
+  return response_text # and return it from the function!
+
+
+
+
+
+
 ### twitterGetUserWithCaching for each movie title that is being searched -- this will need to be included in a loop over the list of searches 
 userTweets = twitterGetUserWithCaching(consumer_key, consumer_secret, access_token, access_token_secret, "umich")
 
 searchedTweets = twitterGetSearchWithCaching(consumer_key, consumer_secret, access_token, access_token_secret, "Moonlight")
 
+searchMovies = getMovieDataWithCaching("Moonlight")
 
 ##### START setup of database: 
 conn = sqlite3.connect('finalproject.db')
@@ -146,7 +173,6 @@ cur.execute('CREATE TABLE Movies (movie_id STRING PRIMARY KEY, movie_title TEXT,
 # You should load into the Users table:
 # All of the users that are tweeting about the searched movies. 
 
-# cur.execute('SELECT user_id FROM Users WHERE user_id like user_id')
 userid = {}
 for tweet in userTweets:
   key = tweet['user']['id_str']
