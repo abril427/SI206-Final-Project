@@ -97,6 +97,8 @@ def twitterGetSearchWithCaching(consumerKey, consumerSecret, accessToken, access
     response_text = CACHE_DICTION["twitter_"+searchQuery] # whichver way we got the data, load it into a python object
   return response_text # and return it from the function!
 
+
+### twitterGetUserWithCaching for each movie title that is being searched -- this will need to be included in a loop over the list of searches 
 userTweets = twitterGetUserWithCaching(consumer_key, consumer_secret, access_token, access_token_secret, "umich")
 
 searchedTweets = twitterGetSearchWithCaching(consumer_key, consumer_secret, access_token, access_token_secret, "Moonlight")
@@ -140,6 +142,30 @@ cur.execute('DROP TABLE IF EXISTS Movies')
 cur.execute('CREATE TABLE Movies (movie_id STRING PRIMARY KEY, movie_title TEXT, director TEXT, num_langs INTEGER, rating REAL, top_actor TEXT)')
 
 
+
+# You should load into the Users table:
+# All of the users that are tweeting about the searched movies. 
+
+# cur.execute('SELECT user_id FROM Users WHERE user_id like user_id')
+userid = {}
+for tweet in userTweets:
+  key = tweet['user']['id_str']
+  if key not in userid:
+    userid = {key: '1'}
+  
+    cur.execute('INSERT INTO Users (user_id, screen_name, num_likes, description, num_tweets, num_followers) VALUES (?, ?, ?, ?, ?, ?)', (key, tweet['user']['screen_name'], tweet['user']['favourites_count'], tweet['user']['description'],tweet['user']['statuses_count'], tweet['user']['followers_count']))
+    conn.commit() 
+
+
+
+## You should load into the Tweets table: 
+## Info about all the tweets that you gather from the timeline of each search.
+
+for tweet in searchedTweets['statuses']:
+  query = searchedTweets['search_metadata']['query']
+  cur.execute('INSERT INTO Tweets (tweet_id, text, user_id, movie_title, num_favs, retweets) VALUES (?, ?, ?, ?, ?, ?)', (tweet['id_str'], tweet['text'], tweet['user']['id_str'], query, tweet['favorite_count'], tweet['retweet_count']))
+  conn.commit() 
+
 ### IMPORTANT: MAKE SURE TO CLOSE YOUR DATABASE CONNECTION AT THE END OF THE FILE HERE SO YOU DO NOT LOCK YOUR DATABASE (it's fixable, but it's a pain). ###
 cur.close()
 
@@ -154,6 +180,22 @@ class TwitterDataTests(unittest.TestCase):
     fstr = open("206_final_project_cache.json","r").read()
     self.assertTrue("umich" in fstr) #Moonlight will be one of the search terms
 
+class DatabaseTests(unittest.TestCase):
+  def test_users(self):
+    conn = sqlite3.connect('finalproject.db')
+    cur = conn.cursor()
+    cur.execute('SELECT * FROM Users');
+    result = cur.fetchall()
+    self.assertTrue(len(result)>=2,"Testing that there are at least 2 distinct users in the Users table")
+    conn.close()
+
+  def test_movies(self):
+    conn = sqlite3.connect('finalproject.db')
+    cur = conn.cursor()
+    cur.execute('SELECT * FROM Movies');
+    result = cur.fetchall()
+    self.assertTrue(len(result) == 3,"Testing that there are at 3 distinct movies in the Movies table")
+    conn.close()
 
 # Remember to invoke your tests so they will run! (Recommend using the verbosity=2 argument.)
 if __name__ == "__main__":
