@@ -191,8 +191,8 @@ newUser = TwitterUser(userTweets[0])
 ##### select three movie title search terms you will use and put them in a list
 movieTitlesSearch = ["Moonlight", "Swiss Army Man", "Lion"]
 
-##### call search() on this list and save it into a variable movie_dict
-##### iterate over movie_dict and create instances of Movie() for each dictornary 
+
+##### iterate over movie_dict and create instances of Movie() for each dictonary 
 movie_dicts = []
 for movie in movieTitlesSearch:
   resp_dict = getMovieDataWithCaching(movie)
@@ -203,9 +203,18 @@ for movie in movie_dicts:
   new_movie = Movie(movie)
   movies_list.append(new_movie)
 
-print(movies_list)
 
 ##### call twitterGetSearchWithCaching() on the title of each movie
+twitterSearchResults = []
+for movie in movies_list:
+  twitterSearchResults = twitterGetSearchWithCaching(consumer_key, consumer_secret, access_token, access_token_secret, movie.title)
+ 
+tweet_list = []  
+for tweet in twitterSearchResults['statuses']:
+  newTweet = Tweet(tweet) #create Tweet instances based off the twitter search results for the movie information
+  tweet_list.append(newTweet)
+
+
   ##### save the returning dictornary as an Tweet() instance and create alist of tweets 
 ##### record information using twitterGetUserWithCaching() about the user who tweeted the Tweet() and all users mentioned in each tweet
   ####create an instance of TwitterUser() for each user and save this into a list
