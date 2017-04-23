@@ -21,6 +21,7 @@ import twitter_info # my personal private twitter_info
 import json
 import sqlite3
 import requests
+import re
 
 
 # Begin filling in instructions....
@@ -133,6 +134,14 @@ class Tweet():
     self.text = tweet_dict['text']
     self.tweet_id = tweet_dict['id_str']
 
+  def get_mentioned_users(self):
+    #match regex to get mentioned users
+    mentioned_users = re.findall('\B\@([\w\-]+)', self.text)
+    # for result in results:
+      # mentioned_users.append(result.group(0))
+    if len(mentioned_users) < 1:
+      return 'no mentioned users'
+    return mentioned_users
 
 # define the following fucntions in class Tweet:
 # get_twitter_user() - this fuction should assign the user to the instance variable user and return the value
@@ -151,6 +160,7 @@ class TwitterUser():
     self.screen_name = user_dict['user']['screen_name']
     self.description = user_dict['user']['description']
     self.num_followers = user_dict['user']['followers_count']
+
 
 
 ##### create class Movie here with the following instance variables:
@@ -184,7 +194,9 @@ searchMovies = getMovieDataWithCaching("Moonlight")
 newMovie = Movie(searchMovies)
 # print(searchedTweets['statuses'][1]) this is one tweet
 newTweet = Tweet(searchedTweets['statuses'][3])
-# print(userTweets[0]) this is one User tweet
+# print(userTweets[0]) #this is one User tweet
+print(newTweet.get_mentioned_users())
+
 newUser = TwitterUser(userTweets[0])
 
 
@@ -208,16 +220,16 @@ for movie in movie_dicts:
 twitterSearchResults = []
 for movie in movies_list:
   twitterSearchResults = twitterGetSearchWithCaching(consumer_key, consumer_secret, access_token, access_token_secret, movie.title)
- 
+
+##### save the returning dictornary as an Tweet() instance and create alist of tweets  
 tweet_list = []  
 for tweet in twitterSearchResults['statuses']:
   newTweet = Tweet(tweet) #create Tweet instances based off the twitter search results for the movie information
   tweet_list.append(newTweet)
 
 
-  ##### save the returning dictornary as an Tweet() instance and create alist of tweets 
 ##### record information using twitterGetUserWithCaching() about the user who tweeted the Tweet() and all users mentioned in each tweet
-  ####create an instance of TwitterUser() for each user and save this into a list
+####create an instance of TwitterUser() for each user and save this into a list
 
 ##### START setup of database: 
 conn = sqlite3.connect('finalproject.db')
@@ -313,6 +325,21 @@ class TwitterTests(unittest.TestCase):
 
   def test_user_tweets_type2(self):
     self.assertEqual(type(userTweets[1]),type({"hi":3})) #check to see that object in list is a dictionary
+
+  def test_mentioned_users(self):
+    newTweet = Tweet(searchedTweets['statuses'][3])
+    newTweet.text = "The missuses: Baroness Lloyd Webber & @VAMNit"
+    self.assertEqual(newTweet.get_mentioned_users(), ['VAMNit'])
+
+  def test_mentioned_users_is_zero(self):
+    newTweet = Tweet(searchedTweets['statuses'][3])
+    newTweet.text = "The missuses: Baroness Lloyd Webber "
+    self.assertEqual(newTweet.get_mentioned_users(), 'no mentioned users')
+
+  def test_mentioned_users_is_more_than_one(self):
+    newTweet = Tweet(searchedTweets['statuses'][3])
+    newTweet.text = "Exploring @Glitch's community for sharing code & projects, it's like the lovechild of @github & @scratch!"
+    self.assertEqual(newTweet.get_mentioned_users(), ['Glitch', 'github', 'scratch'])
 
 #   def test__str__(self):
 #     tweet_dict = {user_id: '898832', text: 'This is text', tweet_id: '982381', movie_title: 'This is the title', num_favs: 7, retweets: 10}
