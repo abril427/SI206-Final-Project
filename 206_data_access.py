@@ -144,7 +144,13 @@ class Tweet():
 # description- this will represent the twitter user description
 # num_followers - containing the number of followers this user has
 
-
+class TwitterUser():
+  """object representing a Twitter User"""
+  def __init__(self, user_dict={}):
+    self.user_id = user_dict['user']['id_str']
+    self.screen_name = user_dict['user']['screen_name']
+    self.description = user_dict['user']['description']
+    self.num_followers = user_dict['user']['followers_count']
 
 
 ##### create class Movie here with the following instance variables:
@@ -172,15 +178,15 @@ class Movie():
 userTweets = twitterGetUserWithCaching(consumer_key, consumer_secret, access_token, access_token_secret, "umich")
 
 searchedTweets = twitterGetSearchWithCaching(consumer_key, consumer_secret, access_token, access_token_secret, "Moonlight")
-# print(searchedTweets['statuses'][1]) this is one tweet
 
 searchMovies = getMovieDataWithCaching("Moonlight")
 
 newMovie = Movie(searchMovies)
+# print(searchedTweets['statuses'][1]) this is one tweet
 newTweet = Tweet(searchedTweets['statuses'][3])
-print(newTweet.text)
-print(newTweet.tweet_id)
-print(newTweet.user_id)
+# print(userTweets[0]) this is one User tweet
+newUser = TwitterUser(userTweets[0])
+
 
 ##### select three movie title search terms you will use and put them in a list
 ##### call search() on this list and save it into a variable movie_dict
