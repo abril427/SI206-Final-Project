@@ -126,6 +126,13 @@ def getMovieDataWithCaching(title):
 # user_id - this will represent the user who tweeted the tweet and will allow us to reference our users table
 # text - this will represent the text of the tweet and will allow us to search for the movie’s mentioned/other material in the tweet
 # tweet_id - this will represent the text of the tweet and will act as a primary key in our Tweets table in our database 
+class Tweet():
+  """object representing tweet"""
+  def __init__(self, tweet_dict={}):
+    self.user_id = tweet_dict['user']['id_str']
+    self.text = tweet_dict['text']
+    self.tweet_id = tweet_dict['id_str']
+
 
 # define the following fucntions in class Tweet:
 # get_twitter_user() - this fuction should assign the user to the instance variable user and return the value
@@ -136,6 +143,8 @@ def getMovieDataWithCaching(title):
 # screen_name - twitter user screenname
 # description- this will represent the twitter user description
 # num_followers - containing the number of followers this user has
+
+
 
 
 ##### create class Movie here with the following instance variables:
@@ -163,10 +172,15 @@ class Movie():
 userTweets = twitterGetUserWithCaching(consumer_key, consumer_secret, access_token, access_token_secret, "umich")
 
 searchedTweets = twitterGetSearchWithCaching(consumer_key, consumer_secret, access_token, access_token_secret, "Moonlight")
+# print(searchedTweets['statuses'][1]) this is one tweet
 
 searchMovies = getMovieDataWithCaching("Moonlight")
 
 newMovie = Movie(searchMovies)
+newTweet = Tweet(searchedTweets['statuses'][3])
+print(newTweet.text)
+print(newTweet.tweet_id)
+print(newTweet.user_id)
 
 ##### select three movie title search terms you will use and put them in a list
 ##### call search() on this list and save it into a variable movie_dict
