@@ -133,6 +133,7 @@ class Tweet():
     self.user_id = tweet_dict['user']['id_str']
     self.text = tweet_dict['text']
     self.tweet_id = tweet_dict['id_str']
+    self.user = tweet_dict['user']['screen_name']
 
   def get_mentioned_users(self):
     #match regex to get mentioned users
@@ -195,7 +196,7 @@ newMovie = Movie(searchMovies)
 # print(searchedTweets['statuses'][1]) this is one tweet
 newTweet = Tweet(searchedTweets['statuses'][3])
 # print(userTweets[0]) #this is one User tweet
-print(newTweet.get_mentioned_users())
+# print(newTweet.get_mentioned_users())
 
 newUser = TwitterUser(userTweets[0])
 
@@ -229,7 +230,22 @@ for tweet in twitterSearchResults['statuses']:
 
 
 ##### record information using twitterGetUserWithCaching() about the user who tweeted the Tweet() and all users mentioned in each tweet
+tweet_users_list = []
+for tweet in tweet_list:
+  user = tweet.user
+  tweet_users_list.append(user)
+  mentioned_users = tweet.get_mentioned_users()
+  if mentioned_users != 'no mentioned users':
+    for user in mentioned_users:
+      tweet_users_list.append(user)
+
 ####create an instance of TwitterUser() for each user and save this into a list
+user_list = [] #list of TwitterUser instances
+for user in tweet_users_list:
+  user_resp_dict = twitterGetUserWithCaching(consumer_key, consumer_secret, access_token, access_token_secret, user)
+  new_user = TwitterUser(user_resp_dict[0])
+  user_list.append(new_user)
+#print(user_list) new list of Twitter Users is created for the ENTIRE neighborhood
 
 ##### START setup of database: 
 conn = sqlite3.connect('finalproject.db')
