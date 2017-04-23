@@ -55,6 +55,7 @@ except:
 
 ##### end caching setup
 
+##### functions to get cached data from sources (Twitter and OMDB)
 
 def twitterGetUserWithCaching(consumerKey, consumerSecret, accessToken, accessSecret, handle):
   results_url = api.user_timeline(id=handle)
@@ -104,9 +105,9 @@ def getMovieDataWithCaching(title):
   results_url = 'http://www.omdbapi.com/?'
   resp = requests.get(url=results_url, params=parameters)
   response = json.loads(resp.text)
-  if ("imdb_"+title) in CACHE_DICTION: # if we've already made this request
+  if ("omdb_"+title) in CACHE_DICTION: # if we've already made this request
       # use stored response
-    response_text = CACHE_DICTION["imdb_" + title] # grab the data from the cache
+    response_text = CACHE_DICTION["omdb_" + title] # grab the data from the cache
   else: # otherwise
     results = response
     CACHE_DICTION["imdb_" + title] = results   
@@ -121,15 +122,59 @@ def getMovieDataWithCaching(title):
 
 
 
+##### create class Tweet here with the following instance variables:
+# user_id - this will represent the user who tweeted the tweet and will allow us to reference our users table
+# text - this will represent the text of the tweet and will allow us to search for the movie’s mentioned/other material in the tweet
+# tweet_id - this will represent the text of the tweet and will act as a primary key in our Tweets table in our database 
+
+# define the following fucntions in class Tweet:
+# get_twitter_user() - this fuction should assign the user to the instance variable user and return the value
+# __str__()
+
+##### create class TwitterUser here with the following instance variables:
+# user_id - this will represent the user who tweeted the tweet and will allow us to reference our users table
+# screen_name - twitter user screenname
+# description- this will represent the twitter user description
+# num_followers - containing the number of followers this user has
 
 
+##### create class Movie here with the following instance variables:
+# title - the title of the movie
+# director - the name of the director 
+# num_langs - the number of languages in the movie
+# rating - the IMDB rating of the movie
+# actors - a list of actors in the movie
+class Movie():
+  """object representing a Movie""" 
+  def __init__(self, movie_dict={}):
+    self.title = movie_dict['Title']
+    self.director = movie_dict['Director']
+    self.rating = movie_dict['imdbRating']
+    self.actors = movie_dict['Actors']
+    self.languages = movie_dict['Language']
+     
+# define the following fucntions in class Movie:
+# search() - this function should search for the three chosen movies in the OMDB in the list and return an accumulate a list of resulting dictionaries
+# __str__()
 
-### twitterGetUserWithCaching for each movie title that is being searched -- this will need to be included in a loop over the list of searches 
+
+##### call caching functions to store API data (example of working caching functions)
+
 userTweets = twitterGetUserWithCaching(consumer_key, consumer_secret, access_token, access_token_secret, "umich")
 
 searchedTweets = twitterGetSearchWithCaching(consumer_key, consumer_secret, access_token, access_token_secret, "Moonlight")
 
 searchMovies = getMovieDataWithCaching("Moonlight")
+
+newMovie = Movie(searchMovies)
+
+##### select three movie title search terms you will use and put them in a list
+##### call search() on this list and save it into a variable movie_dict
+##### iterate over movie_dict and create instances of Movie() for each dictornary 
+##### call twitterGetSearchWithCaching() on the title of each movie
+  ##### save the returning dictornary as an Tweet() instance and create alist of tweets 
+##### record information using twitterGetUserWithCaching() about the user who tweeted the Tweet() and all users mentioned in each tweet
+  ####create an instance of TwitterUser() for each user and save this into a list
 
 ##### START setup of database: 
 conn = sqlite3.connect('finalproject.db')
@@ -161,7 +206,7 @@ cur.execute('CREATE TABLE Users (user_id STRING PRIMARY KEY, screen_name TEXT, n
 # - movie_id (containing the id belonging to the movie itself, from the data you got from OMDB) -- this column should be the PRIMARY KEY of this table
 # - movie_title (containing the text of the movie title of the movie)
 # - director (containig the text of the name of the director of the movie)
-# - num_langs (containing the number of languages the movie was produced/released in)
+# - num_langs (containing the number of languages the movie has in it)
 # - rating (containing the REAL value of the rating of the movie)
 # - top_actor (containg the text of the name of the top billed actor in the movie)
 
@@ -182,6 +227,9 @@ for tweet in userTweets:
     cur.execute('INSERT INTO Users (user_id, screen_name, num_likes, description, num_tweets, num_followers) VALUES (?, ?, ?, ?, ?, ?)', (key, tweet['user']['screen_name'], tweet['user']['favourites_count'], tweet['user']['description'],tweet['user']['statuses_count'], tweet['user']['followers_count']))
     conn.commit() 
 
+## You should load into the Movies table: 
+## Info about the movie searched from the OMDB Api given a specific movie title 
+
 
 
 ## You should load into the Tweets table: 
@@ -192,12 +240,23 @@ for tweet in searchedTweets['statuses']:
   cur.execute('INSERT INTO Tweets (tweet_id, text, user_id, movie_title, num_favs, retweets) VALUES (?, ?, ?, ?, ?, ?)', (tweet['id_str'], tweet['text'], tweet['user']['id_str'], query, tweet['favorite_count'], tweet['retweet_count']))
   conn.commit() 
 
+
+##### After data is loaded into the three tables start data manipulation 
+
+##### load the following querines: 
+# use list comprehensions to get the len() of the description of each User 
+# accumulation of dictionaries to see how many languages are used across movies 
+
+
+
+
+
 ### IMPORTANT: MAKE SURE TO CLOSE YOUR DATABASE CONNECTION AT THE END OF THE FILE HERE SO YOU DO NOT LOCK YOUR DATABASE (it's fixable, but it's a pain). ###
 cur.close()
 
 
 # Put your tests here, with any edits you now need from when you turned them in with your project plan.
-class TwitterDataTests(unittest.TestCase):
+class TwitterTests(unittest.TestCase):
   def test_twitter_search_term_caching(self):
     fstr = open("206_final_project_cache.json","r").read()
     self.assertTrue("twitter_Moonlight" in fstr) #Moonlight will be one of the search terms
@@ -206,22 +265,39 @@ class TwitterDataTests(unittest.TestCase):
     fstr = open("206_final_project_cache.json","r").read()
     self.assertTrue("umich" in fstr) #Moonlight will be one of the search terms
 
-class DatabaseTests(unittest.TestCase):
-  def test_users(self):
-    conn = sqlite3.connect('finalproject.db')
-    cur = conn.cursor()
-    cur.execute('SELECT * FROM Users');
-    result = cur.fetchall()
-    self.assertTrue(len(result)>=2,"Testing that there are at least 2 distinct users in the Users table")
-    conn.close()
+  def test_user_tweets_type(self):
+    self.assertEqual(type(userTweets),type([]))
 
-  def test_movies(self):
-    conn = sqlite3.connect('finalproject.db')
-    cur = conn.cursor()
-    cur.execute('SELECT * FROM Movies');
-    result = cur.fetchall()
-    self.assertTrue(len(result) == 3,"Testing that there are at 3 distinct movies in the Movies table")
-    conn.close()
+  def test_user_tweets_type2(self):
+    self.assertEqual(type(userTweets[1]),type({"hi":3})) #check to see that object in list is a dictionary
+
+#   def test__str__(self):
+#     tweet_dict = {user_id: '898832', text: 'This is text', tweet_id: '982381', movie_title: 'This is the title', num_favs: 7, retweets: 10}
+#     tweet = Tweet(tweet_dict)
+#     tweet_str = tweet.__str__()
+#     self.assertTrue("This tweet, 'This is a text', was tweeted tweeted by user 898832 and has 7 favorites and 10 retweets.", "This tweet, 'This is a text', was tweeted tweeted by user 898832 and has 7 favorites and 10 retweets.")
+
+# class MovieTests(unittest.TestCase):
+#   def test_type_searh(self):
+#     self.assertEqual(type(self.search(["term1, term2, term3"])), type([{"hi": 1}]) )
+
+
+# class DatabaseTests(unittest.TestCase):
+#   def test_users(self):
+#     conn = sqlite3.connect('finalproject.db')
+#     cur = conn.cursor()
+#     cur.execute('SELECT * FROM Users');
+#     result = cur.fetchall()
+#     self.assertTrue(len(result)>=2,"Testing that there are at least 2 distinct users in the Users table")
+#     conn.close()
+
+#   def test_movies(self):
+#     conn = sqlite3.connect('finalproject.db')
+#     cur = conn.cursor()
+#     cur.execute('SELECT * FROM Movies');
+#     result = cur.fetchall()
+#     self.assertTrue(len(result) == 3,"Testing that there are at 3 distinct movies in the Movies table")
+#     conn.close()
 
 # Remember to invoke your tests so they will run! (Recommend using the verbosity=2 argument.)
 if __name__ == "__main__":
