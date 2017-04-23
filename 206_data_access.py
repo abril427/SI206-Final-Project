@@ -105,19 +105,19 @@ def getMovieDataWithCaching(title):
   results_url = 'http://www.omdbapi.com/?'
   resp = requests.get(url=results_url, params=parameters)
   response = json.loads(resp.text)
-  if ("omdb_"+title) in CACHE_DICTION: # if we've already made this request
+  if ("imdb_"+title) in CACHE_DICTION: # if we've already made this request
       # use stored response
-    response_text = CACHE_DICTION["omdb_" + title] # grab the data from the cache
+    response_text = CACHE_DICTION["imdb_"+title] # grab the data from the cache
   else: # otherwise
     results = response
-    CACHE_DICTION["imdb_" + title] = results   
+    CACHE_DICTION["imdb_"+title] = results   
 
     #cache data
     cache_file = open('206_final_project_cache.json', 'w')
     cache_file.write(json.dumps(CACHE_DICTION))
     cache_file.close()
 
-    response_text = CACHE_DICTION[title] # whichver way we got the data, load it into a python object
+    response_text = CACHE_DICTION["imdb_"+title] # whichver way we got the data, load it into a python object
   return response_text # and return it from the function!
 
 
@@ -189,8 +189,22 @@ newUser = TwitterUser(userTweets[0])
 
 
 ##### select three movie title search terms you will use and put them in a list
+movieTitlesSearch = ["Moonlight", "Swiss Army Man", "Lion"]
+
 ##### call search() on this list and save it into a variable movie_dict
 ##### iterate over movie_dict and create instances of Movie() for each dictornary 
+movie_dicts = []
+for movie in movieTitlesSearch:
+  resp_dict = getMovieDataWithCaching(movie)
+  movie_dicts.append(resp_dict)
+
+movies_list = [] #list of Movies instances
+for movie in movie_dicts:
+  new_movie = Movie(movie)
+  movies_list.append(new_movie)
+
+print(movies_list)
+
 ##### call twitterGetSearchWithCaching() on the title of each movie
   ##### save the returning dictornary as an Tweet() instance and create alist of tweets 
 ##### record information using twitterGetUserWithCaching() about the user who tweeted the Tweet() and all users mentioned in each tweet
