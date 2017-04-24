@@ -22,7 +22,7 @@ import json
 import sqlite3
 import requests
 import re
-
+from collections import Counter
 
 # Begin filling in instructions....
 
@@ -187,17 +187,13 @@ class Movie():
 ##### call caching functions to store API data (example of working caching functions)
 
 userTweets = twitterGetUserWithCaching(consumer_key, consumer_secret, access_token, access_token_secret, "umich")
-
 # searchedTweets = twitterGetSearchWithCaching(consumer_key, consumer_secret, access_token, access_token_secret, "Moonlight")
-
 # searchMovies = getMovieDataWithCaching("Moonlight")
-
 # newMovie = Movie(searchMovies)
 # # print(searchedTweets['statuses'][1]) this is one tweet
 # newTweet = Tweet(searchedTweets['statuses'][3])
 # # print(userTweets[0]) #this is one User tweet
 # # print(newTweet.get_mentioned_users())
-
 # newUser = TwitterUser(userTweets[0])
 
 
@@ -340,6 +336,25 @@ for resp in db_actors:
   num_actors = len(res)
   actor_dict[resp[0]] = num_actors
 
+query = "SELECT text, Users.screen_name FROM Tweets INNER JOIN Users ON Tweets.user_id = Users.user_id" #find the users who have tweeted tweets about the searched movies from all users in the User "neighborhood"
+cur.execute(query)
+joined_results = cur.fetchall()
+
+descriptions_users = {}
+query = "SELECT description, screen_name from Users"
+cur.execute(query)
+for row in cur:
+  if row[0] != '':
+    descriptions_users[row[1]] = str(row[0])
+
+
+cnt = Counter()
+most_common_chars = {}
+for resp in db_actors:
+  most_common_char = Counter(resp[0]).most_common(1)
+  if resp[0] not in most_common_chars:
+    most_common_chars[resp[0]] = most_common_char[0][0]
+
 #####begin writing to output file 
 output_file = open('206_final_output.txt', 'w')
 output_file.write("TWITTER SUMMARY FOR OMDB: 4/24/17 \n")
@@ -357,6 +372,18 @@ for user in user_popularity:
 for k in actor_dict:
   output_file.write("\n" + k + " has " + str(actor_dict[k]) + " top performing actors listed for this movie.")
 
+output_file.write('\n')
+for k in most_common_chars:
+  output_file.write("\nThe most common character in the title of " + k + " is " + most_common_chars[k] + " (with arbitraty selection when most common appearance is 1)")
+
+output_file.write('\n')
+for result in joined_results:
+  output_file.write("\nThe user " + result[1] + " has tweeted about one of the searched movie terms, this is their tweet: " + result[0])
+
+output_file.write('\n\n')
+output_file.write('The following users have descriptions listed on their Twitter profiles: \n')
+for k in descriptions_users:
+  output_file.write("\nThe user " + k + " has the following description: " + descriptions_users[k])
 
 
 ### IMPORTANT: MAKE SURE TO CLOSE YOUR DATABASE CONNECTION AT THE END OF THE FILE HERE SO YOU DO NOT LOCK YOUR DATABASE (it's fixable, but it's a pain). ###
