@@ -340,7 +340,7 @@ for resp in db_actors:
   num_actors = len(res)
   actor_dict[resp[0]] = num_actors
 
-#####begin output file 
+#####begin writing to output file 
 output_file = open('206_final_output.txt', 'w')
 output_file.write("The three movies being searched for in the omdb databse are: \n")
 for movie in movieTitlesSearch:
@@ -402,22 +402,22 @@ class TwitterTests(unittest.TestCase):
 #     self.assertEqual(type(self.search(["term1, term2, term3"])), type([{"hi": 1}]) )
 
 
-# class DatabaseTests(unittest.TestCase):
-#   def test_users(self):
-#     conn = sqlite3.connect('finalproject.db')
-#     cur = conn.cursor()
-#     cur.execute('SELECT * FROM Users');
-#     result = cur.fetchall()
-#     self.assertTrue(len(result)>=2,"Testing that there are at least 2 distinct users in the Users table")
-#     conn.close()
+class DatabaseTests(unittest.TestCase):
+  def test_users(self):
+    conn = sqlite3.connect('finalproject.db')
+    cur = conn.cursor()
+    cur.execute('SELECT * FROM Users');
+    result = cur.fetchall()
+    self.assertTrue(len(result)>=2,"Testing that there are at least 2 distinct users in the Users table")
+    conn.close()
 
-#   def test_movies(self):
-#     conn = sqlite3.connect('finalproject.db')
-#     cur = conn.cursor()
-#     cur.execute('SELECT * FROM Movies');
-#     result = cur.fetchall()
-#     self.assertTrue(len(result) == 3,"Testing that there are at 3 distinct movies in the Movies table")
-#     conn.close()
+  def test_movies(self):
+    conn = sqlite3.connect('finalproject.db')
+    cur = conn.cursor()
+    cur.execute('SELECT * FROM Movies');
+    result = cur.fetchall()
+    self.assertTrue(len(result) == 3,"Testing that there are at 3 distinct movies in the Movies table")
+    conn.close()
 
 # Remember to invoke your tests so they will run! (Recommend using the verbosity=2 argument.)
 if __name__ == "__main__":
