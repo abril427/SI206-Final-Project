@@ -188,17 +188,17 @@ class Movie():
 
 userTweets = twitterGetUserWithCaching(consumer_key, consumer_secret, access_token, access_token_secret, "umich")
 
-searchedTweets = twitterGetSearchWithCaching(consumer_key, consumer_secret, access_token, access_token_secret, "Moonlight")
+# searchedTweets = twitterGetSearchWithCaching(consumer_key, consumer_secret, access_token, access_token_secret, "Moonlight")
 
-searchMovies = getMovieDataWithCaching("Moonlight")
+# searchMovies = getMovieDataWithCaching("Moonlight")
 
-newMovie = Movie(searchMovies)
-# print(searchedTweets['statuses'][1]) this is one tweet
-newTweet = Tweet(searchedTweets['statuses'][3])
-# print(userTweets[0]) #this is one User tweet
-# print(newTweet.get_mentioned_users())
+# newMovie = Movie(searchMovies)
+# # print(searchedTweets['statuses'][1]) this is one tweet
+# newTweet = Tweet(searchedTweets['statuses'][3])
+# # print(userTweets[0]) #this is one User tweet
+# # print(newTweet.get_mentioned_users())
 
-newUser = TwitterUser(userTweets[0])
+# newUser = TwitterUser(userTweets[0])
 
 
 ##### select three movie title search terms you will use and put them in a list
@@ -342,7 +342,10 @@ for resp in db_actors:
 
 #####begin writing to output file 
 output_file = open('206_final_output.txt', 'w')
+output_file.write("TWITTER SUMMARY FOR OMDB: 4/24/17 \n")
+output_file.write('\n')
 output_file.write("The three movies being searched for in the omdb databse are: \n")
+
 for movie in movieTitlesSearch:
   output_file.write(movie + "\n")
 output_file.write("\nUsers with more than 1000 followers are the following: \n")
@@ -368,41 +371,57 @@ class TwitterTests(unittest.TestCase):
 
   def test_twitter_user_caching(self):
     fstr = open("206_final_project_cache.json","r").read()
-    self.assertTrue("umich" in fstr) #Moonlight will be one of the search terms
+    self.assertTrue("umich" in fstr) #umich data should be cached 
 
   def test_user_tweets_type(self):
-    self.assertEqual(type(userTweets),type([]))
+    self.assertEqual(type(user_resp_dict),type([]))
 
   def test_user_tweets_type2(self):
-    self.assertEqual(type(userTweets[1]),type({"hi":3})) #check to see that object in list is a dictionary
+    self.assertEqual(type(user_resp_dict[1]),type({"hi":3})) #check to see that object in list is a dictionary
 
   def test_mentioned_users(self):
-    newTweet = Tweet(searchedTweets['statuses'][3])
+    newTweet = Tweet(twitterSearchResults['statuses'][3])
     newTweet.text = "The missuses: Baroness Lloyd Webber & @VAMNit"
     self.assertEqual(newTweet.get_mentioned_users(), ['VAMNit'])
 
   def test_mentioned_users_is_zero(self):
-    newTweet = Tweet(searchedTweets['statuses'][3])
+    newTweet = Tweet(twitterSearchResults['statuses'][3])
     newTweet.text = "The missuses: Baroness Lloyd Webber "
     self.assertEqual(newTweet.get_mentioned_users(), 'no mentioned users')
 
   def test_mentioned_users_is_more_than_one(self):
-    newTweet = Tweet(searchedTweets['statuses'][3])
+    newTweet = Tweet(twitterSearchResults['statuses'][3])
     newTweet.text = "Exploring @Glitch's community for sharing code & projects, it's like the lovechild of @github & @scratch!"
     self.assertEqual(newTweet.get_mentioned_users(), ['Glitch', 'github', 'scratch'])
 
-#   def test__str__(self):
-#     tweet_dict = {user_id: '898832', text: 'This is text', tweet_id: '982381', movie_title: 'This is the title', num_favs: 7, retweets: 10}
-#     tweet = Tweet(tweet_dict)
-#     tweet_str = tweet.__str__()
-#     self.assertTrue("This tweet, 'This is a text', was tweeted tweeted by user 898832 and has 7 favorites and 10 retweets.", "This tweet, 'This is a text', was tweeted tweeted by user 898832 and has 7 favorites and 10 retweets.")
+  def test_creation_of_Movie_instances(self):
+    searchMovies = getMovieDataWithCaching("Lion King")
+    newMovie = Movie(searchMovies)
+    self.assertEqual(type(movies_list[0]), type(newMovie))
 
-# class MovieTests(unittest.TestCase):
-#   def test_type_searh(self):
-#     self.assertEqual(type(self.search(["term1, term2, term3"])), type([{"hi": 1}]) )
+  def test_creation_of_Tweet_instances(self):
+    searchedTweets = twitterGetSearchWithCaching(consumer_key, consumer_secret, access_token, access_token_secret, "Moonlight")
+    newTweet = Tweet(searchedTweets['statuses'][0])
+    self.assertEqual(type(tweet_list[0]), type(newTweet))
 
+  def test_creation_of_TwitterUser_instances(self):
+    searchedUsers = twitterGetUserWithCaching(consumer_key, consumer_secret, access_token, access_token_secret, "umich")
+    newUser = TwitterUser(searchedUsers[0])
+    self.assertEqual(type(user_list[0]), type(newUser))
 
 class DatabaseTests(unittest.TestCase):
+  def test_tweets(self):
+    conn = sqlite3.connect('finalproject.db')
+    cur = conn.cursor()
+    cur.execute('SELECT movie_title FROM Tweets');
+    results = cur.fetchall()
+    titles = []
+    for result in results:
+      if result not in titles:
+        titles.append(result)
+    self.assertTrue(len(titles),3)
+    conn.close()
+
   def test_users(self):
     conn = sqlite3.connect('finalproject.db')
     cur = conn.cursor()
