@@ -287,7 +287,7 @@ cur.execute('CREATE TABLE Users (user_id STRING PRIMARY KEY, screen_name TEXT, n
 # - top_actor (containg the text of the name of the top billed actor in the movie)
 
 cur.execute('DROP TABLE IF EXISTS Movies')
-cur.execute('CREATE TABLE Movies (movie_id STRING PRIMARY KEY, movie_title TEXT, director TEXT, languages STRING, rating REAL, top_actor TEXT)')
+cur.execute('CREATE TABLE Movies (movie_id STRING PRIMARY KEY, movie_title TEXT, director TEXT, languages STRING, rating REAL, top_actor TEXT, actors STRING)')
 
 
 
@@ -309,7 +309,7 @@ for movie in movie_dicts:
   actors = movie['Actors']
   actors_list = re.findall('([A-Za-z]+\s[A-Za-z]*),', actors)
   top_billed_actor = actors_list[0]
-  cur.execute('INSERT INTO Movies (movie_id, movie_title, director, languages, rating, top_actor) VALUES (?, ?, ?, ?, ?, ?)', (movie['imdbID'], movie['Title'], movie['Director'], movie['Language'], movie['imdbRating'], top_billed_actor))
+  cur.execute('INSERT INTO Movies (movie_id, movie_title, director, languages, rating, top_actor, actors) VALUES (?, ?, ?, ?, ?, ?, ?)', (movie['imdbID'], movie['Title'], movie['Director'], movie['Language'], movie['imdbRating'], top_billed_actor, movie['Actors']))
   conn.commit()
 
 ## You should load into the Tweets table: 
@@ -323,12 +323,36 @@ for search in list_of_searches:
 
 
 ##### After data is loaded into the three tables start data manipulation 
-
-##### load the following querines: 
+##### load the following possible querines: 
 # use list comprehensions to get the len() of the description of each User 
 # accumulation of dictionaries to see how many languages are used across movies 
 
+query = "SELECT screen_name, num_tweets FROM Users WHERE num_followers > 1000"
+cur.execute(query)
+user_popularity = cur.fetchall()
 
+query = "SELECT movie_title, actors FROM Movies"
+cur.execute(query)
+db_actors = cur.fetchall()
+actor_dict = {}
+for resp in db_actors:
+  res = re.findall('([A-Za-z]+\s[A-Za-z]*),', resp[1])
+  num_actors = len(res)
+  actor_dict[resp[0]] = num_actors
+
+#####begin output file 
+output_file = open('206_final_output.txt', 'w')
+output_file.write("The three movies being searched for in the omdb databse are: \n")
+for movie in movieTitlesSearch:
+  output_file.write(movie + "\n")
+output_file.write("\nUsers with more than 1000 followers are the following: \n")
+
+for user in user_popularity:
+  output_file.write(user[0] + " has tweeted " + str(user[1]) + " tweets")
+  output_file.write('\n')
+    
+for k in actor_dict:
+  output_file.write("\n" + k + " has " + str(actor_dict[k]) + " top performing actors listed for this movie.")
 
 
 
