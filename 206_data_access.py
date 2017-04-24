@@ -127,6 +127,10 @@ def getMovieDataWithCaching(title):
 # user_id - this will represent the user who tweeted the tweet and will allow us to reference our users table
 # text - this will represent the text of the tweet and will allow us to search for the movie’s mentioned/other material in the tweet
 # tweet_id - this will represent the text of the tweet and will act as a primary key in our Tweets table in our database 
+
+# define the following fucntions in class Tweet:
+# get_mentioned_users() - this fuction should find the twitter users that are mentioned in the tweet text
+# __str__()
 class Tweet():
   """object representing tweet"""
   def __init__(self, tweet_dict={}):
@@ -144,16 +148,13 @@ class Tweet():
       return 'no mentioned users'
     return mentioned_users
 
-# define the following fucntions in class Tweet:
-# get_twitter_user() - this fuction should assign the user to the instance variable user and return the value
-# __str__()
+
 
 ##### create class TwitterUser here with the following instance variables:
 # user_id - this will represent the user who tweeted the tweet and will allow us to reference our users table
 # screen_name - twitter user screenname
 # description- this will represent the twitter user description
 # num_followers - containing the number of followers this user has
-
 class TwitterUser():
   """object representing a Twitter User"""
   def __init__(self, user_dict={}):
@@ -170,6 +171,9 @@ class TwitterUser():
 # num_langs - the number of languages in the movie
 # rating - the IMDB rating of the movie
 # actors - a list of actors in the movie
+
+# define the following fucntions in class Movie:
+# __str__()
 class Movie():
   """object representing a Movie""" 
   def __init__(self, movie_dict={}):
@@ -179,10 +183,6 @@ class Movie():
     self.actors = movie_dict['Actors']
     self.languages = movie_dict['Language']
      
-# define the following fucntions in class Movie:
-# search() - this function should search for the three chosen movies in the OMDB in the list and return an accumulate a list of resulting dictionaries
-# __str__()
-
 
 ##### call caching functions to store API data (example of working caching functions)
 
@@ -206,7 +206,7 @@ movieTitlesSearch = ["Moonlight", "Swiss Army Man", "Lion"]
 
 
 ##### iterate over movie_dict and create instances of Movie() for each dictonary 
-movie_dicts = []
+movie_dicts = [] #list of movie dictionaries 
 for movie in movieTitlesSearch:
   resp_dict = getMovieDataWithCaching(movie)
   movie_dicts.append(resp_dict)
@@ -218,34 +218,35 @@ for movie in movie_dicts:
 
 
 ##### call twitterGetSearchWithCaching() on the title of each movie
-twitterSearchResults = []
-for movie in movies_list:
-  twitterSearchResults = twitterGetSearchWithCaching(consumer_key, consumer_secret, access_token, access_token_secret, movie.title)
+# twitterSearchResults = []
+# for movie in movies_list:
+#   twitterSearchResults = twitterGetSearchWithCaching(consumer_key, consumer_secret, access_token, access_token_secret, movie.title)
 
-##### save the returning dictornary as an Tweet() instance and create alist of tweets  
-tweet_list = []  
-for tweet in twitterSearchResults['statuses']:
-  newTweet = Tweet(tweet) #create Tweet instances based off the twitter search results for the movie information
-  tweet_list.append(newTweet)
+# ##### save the returning dictornary as an Tweet() instance and create alist of tweets  
+# tweet_list = []  
+# for tweet in twitterSearchResults['statuses']:
+#   newTweet = Tweet(tweet) #create Tweet instances based off the twitter search results for the movie information
+#   tweet_list.append(newTweet)
 
 
 ##### record information using twitterGetUserWithCaching() about the user who tweeted the Tweet() and all users mentioned in each tweet
-tweet_users_list = []
-for tweet in tweet_list:
-  user = tweet.user
-  tweet_users_list.append(user)
-  mentioned_users = tweet.get_mentioned_users()
-  if mentioned_users != 'no mentioned users':
-    for user in mentioned_users:
-      tweet_users_list.append(user)
+# tweet_users_list = []
+# for tweet in tweet_list:
+#   user = tweet.user
+#   tweet_users_list.append(user)
+#   mentioned_users = tweet.get_mentioned_users()
+#   if mentioned_users != 'no mentioned users':
+#     for user in mentioned_users:
+#       tweet_users_list.append(user)
 
 ####create an instance of TwitterUser() for each user and save this into a list
-user_list = [] #list of TwitterUser instances
-for user in tweet_users_list:
-  user_resp_dict = twitterGetUserWithCaching(consumer_key, consumer_secret, access_token, access_token_secret, user)
-  new_user = TwitterUser(user_resp_dict[0])
-  user_list.append(new_user)
+# user_list = [] #list of TwitterUser instances
+# for user in tweet_users_list:
+#   user_resp_dict = twitterGetUserWithCaching(consumer_key, consumer_secret, access_token, access_token_secret, user)
+#   new_user = TwitterUser(user_resp_dict[0])
+#   user_list.append(new_user)
 #print(user_list) new list of Twitter Users is created for the ENTIRE neighborhood
+
 
 ##### START setup of database: 
 conn = sqlite3.connect('finalproject.db')
@@ -282,7 +283,7 @@ cur.execute('CREATE TABLE Users (user_id STRING PRIMARY KEY, screen_name TEXT, n
 # - top_actor (containg the text of the name of the top billed actor in the movie)
 
 cur.execute('DROP TABLE IF EXISTS Movies')
-cur.execute('CREATE TABLE Movies (movie_id STRING PRIMARY KEY, movie_title TEXT, director TEXT, num_langs INTEGER, rating REAL, top_actor TEXT)')
+cur.execute('CREATE TABLE Movies (movie_id STRING PRIMARY KEY, movie_title TEXT, director TEXT, languages STRING, rating REAL, top_actor TEXT)')
 
 
 
@@ -300,8 +301,13 @@ for tweet in userTweets:
 
 ## You should load into the Movies table: 
 ## Info about the movie searched from the OMDB Api given a specific movie title 
-
-
+for movie in movie_dicts:
+  actors = movie['Actors']
+  actors_list = re.findall('([A-Za-z]+\s[A-Za-z]*),', actors)
+  # top_billed_actor = movie['Actors'][0]
+  top_billed_actor = actors_list[0]
+  cur.execute('INSERT INTO Movies (movie_id, movie_title, director, languages, rating, top_actor) VALUES (?, ?, ?, ?, ?, ?)', (movie['imdbID'], movie['Title'], movie['Director'], movie['Language'], movie['imdbRating'], top_billed_actor))
+  conn.commit()
 
 ## You should load into the Tweets table: 
 ## Info about all the tweets that you gather from the timeline of each search.
