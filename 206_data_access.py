@@ -232,21 +232,23 @@ for tweet in twitterSearchResults['statuses']:
 
 
 ##### record information using twitterGetUserWithCaching() about the user who tweeted the Tweet() and all users mentioned in each tweet
-# tweet_users_list = []
-# for tweet in tweet_list:
-#   user = tweet.user
-#   tweet_users_list.append(user)
-#   mentioned_users = tweet.get_mentioned_users()
-#   if mentioned_users != 'no mentioned users':
-#     for user in mentioned_users:
-#       tweet_users_list.append(user)
+tweet_users_list = []
+for tweet in tweet_list:
+  user = tweet.user
+  tweet_users_list.append(user)
+  mentioned_users = tweet.get_mentioned_users()
+  if mentioned_users != 'no mentioned users':
+    for user in mentioned_users:
+      tweet_users_list.append(user)
 
 ####create an instance of TwitterUser() for each user and save this into a list
-# user_list = [] #list of TwitterUser instances
-# for user in tweet_users_list:
-#   user_resp_dict = twitterGetUserWithCaching(consumer_key, consumer_secret, access_token, access_token_secret, user)
-#   new_user = TwitterUser(user_resp_dict[0])
-#   user_list.append(new_user)
+user_list = [] #list of TwitterUser instances
+list_of_user_dicts = []
+for user in tweet_users_list:
+  user_resp_dict = twitterGetUserWithCaching(consumer_key, consumer_secret, access_token, access_token_secret, user)
+  list_of_user_dicts.append(user_resp_dict[0])
+  new_user = TwitterUser(user_resp_dict[0])
+  user_list.append(new_user)
 #print(user_list) new list of Twitter Users is created for the ENTIRE neighborhood
 
 
@@ -293,12 +295,12 @@ cur.execute('CREATE TABLE Movies (movie_id STRING PRIMARY KEY, movie_title TEXT,
 # All of the users that are tweeting about the searched movies. 
 
 userid = {}
-for tweet in userTweets:
-  key = tweet['user']['id_str']
-  if key not in userid:
-    userid = {key: '1'}
-  
-    cur.execute('INSERT INTO Users (user_id, screen_name, num_likes, description, num_tweets, num_followers) VALUES (?, ?, ?, ?, ?, ?)', (key, tweet['user']['screen_name'], tweet['user']['favourites_count'], tweet['user']['description'],tweet['user']['statuses_count'], tweet['user']['followers_count']))
+for tweet in list_of_user_dicts:
+  # key = tweet['user']['id_str']
+  if tweet['user']['id_str'] not in userid:
+    userid[tweet['user']['id_str']] = '1'
+
+    cur.execute('INSERT INTO Users (user_id, screen_name, num_likes, description, num_tweets, num_followers) VALUES (?, ?, ?, ?, ?, ?)', (tweet['user']['id_str'], tweet['user']['screen_name'], tweet['user']['favourites_count'], tweet['user']['description'],tweet['user']['statuses_count'], tweet['user']['followers_count']))
     conn.commit() 
 
 ## You should load into the Movies table: 
@@ -316,7 +318,6 @@ for movie in movie_dicts:
 for search in list_of_searches:
   query = search['search_metadata']['query']
   for tweet in search['statuses']:
-    
     cur.execute('INSERT INTO Tweets (tweet_id, text, user_id, movie_title, num_favs, retweets) VALUES (?, ?, ?, ?, ?, ?)', (tweet['id_str'], tweet['text'], tweet['user']['id_str'], query, tweet['favorite_count'], tweet['retweet_count']))
     conn.commit() 
 
