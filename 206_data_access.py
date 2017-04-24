@@ -218,15 +218,17 @@ for movie in movie_dicts:
 
 
 ##### call twitterGetSearchWithCaching() on the title of each movie
-# twitterSearchResults = []
-# for movie in movies_list:
-#   twitterSearchResults = twitterGetSearchWithCaching(consumer_key, consumer_secret, access_token, access_token_secret, movie.title)
+twitterSearchResults = []
+list_of_searches = []
+for movie in movies_list:
+  twitterSearchResults = twitterGetSearchWithCaching(consumer_key, consumer_secret, access_token, access_token_secret, movie.title)
+  list_of_searches.append(twitterSearchResults)
 
 # ##### save the returning dictornary as an Tweet() instance and create alist of tweets  
-# tweet_list = []  
-# for tweet in twitterSearchResults['statuses']:
-#   newTweet = Tweet(tweet) #create Tweet instances based off the twitter search results for the movie information
-#   tweet_list.append(newTweet)
+tweet_list = []  
+for tweet in twitterSearchResults['statuses']:
+  newTweet = Tweet(tweet) #create Tweet instances based off the twitter search results for the movie information
+  tweet_list.append(newTweet)
 
 
 ##### record information using twitterGetUserWithCaching() about the user who tweeted the Tweet() and all users mentioned in each tweet
@@ -304,7 +306,6 @@ for tweet in userTweets:
 for movie in movie_dicts:
   actors = movie['Actors']
   actors_list = re.findall('([A-Za-z]+\s[A-Za-z]*),', actors)
-  # top_billed_actor = movie['Actors'][0]
   top_billed_actor = actors_list[0]
   cur.execute('INSERT INTO Movies (movie_id, movie_title, director, languages, rating, top_actor) VALUES (?, ?, ?, ?, ?, ?)', (movie['imdbID'], movie['Title'], movie['Director'], movie['Language'], movie['imdbRating'], top_billed_actor))
   conn.commit()
@@ -312,10 +313,12 @@ for movie in movie_dicts:
 ## You should load into the Tweets table: 
 ## Info about all the tweets that you gather from the timeline of each search.
 
-for tweet in searchedTweets['statuses']:
-  query = searchedTweets['search_metadata']['query']
-  cur.execute('INSERT INTO Tweets (tweet_id, text, user_id, movie_title, num_favs, retweets) VALUES (?, ?, ?, ?, ?, ?)', (tweet['id_str'], tweet['text'], tweet['user']['id_str'], query, tweet['favorite_count'], tweet['retweet_count']))
-  conn.commit() 
+for search in list_of_searches:
+  query = search['search_metadata']['query']
+  for tweet in search['statuses']:
+    
+    cur.execute('INSERT INTO Tweets (tweet_id, text, user_id, movie_title, num_favs, retweets) VALUES (?, ?, ?, ?, ?, ?)', (tweet['id_str'], tweet['text'], tweet['user']['id_str'], query, tweet['favorite_count'], tweet['retweet_count']))
+    conn.commit() 
 
 
 ##### After data is loaded into the three tables start data manipulation 
